@@ -29,7 +29,8 @@ namespace Task_1
             {
                 Truck truck = new Truck(i);
                 Thread t = new Thread(TruckLoading);
-                t.Start(truck);
+                truck.T = t;
+                truck.T.Start(truck);
             }
             Console.ReadLine();
         }
@@ -80,9 +81,9 @@ namespace Task_1
         }
         public static void TruckLoading(object obj)
         {
-            Truck truck = (Truck)obj;
-            Console.WriteLine("Truck " + truck.ID + " ready for loading");
+            Truck truck = (Truck)obj;            
             semaphore.Wait();
+            Console.WriteLine("Truck " + truck.ID + " ready for loading");
             int loadTime = rnd.Next(500, 5000);
             truck.TruckLoadTime = loadTime;
             Thread.Sleep(loadTime);
