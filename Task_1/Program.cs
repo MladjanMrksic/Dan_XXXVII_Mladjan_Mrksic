@@ -41,7 +41,7 @@ namespace Task_1
         {
             lock (l)
             {
-                sw = new StreamWriter(path, append: true);
+                sw = new StreamWriter(path);
                 using (sw)
                 {
                     Console.WriteLine("Generating routes.");
@@ -68,16 +68,14 @@ namespace Task_1
                     Console.WriteLine(item);
                 }
                 Console.WriteLine("Routes are chosen, start loading the trucks.");
-            }
-            
+            }            
         }
         public static void LowestDigitsDivisibleByThree()
         {
             List<int> temp = new List<int>();
             sr = new StreamReader(path);
             using (sr)
-            {
-                            
+            {                            
                 string line;
                 while ((line = sr.ReadLine()) != null)
                 {
@@ -95,10 +93,10 @@ namespace Task_1
         {
             Truck truck = (Truck)obj;
             semaphore.Wait();
-            Console.WriteLine("Truck " + truck.ID + " ready for loading");            
+            Console.WriteLine("Truck " + truck.ID + " ready for loading.");            
             truck.TruckLoadTime = rnd.Next(500, 5000);
             Thread.Sleep(truck.TruckLoadTime);
-            Console.WriteLine("Truck " + truck.ID + " loaded");
+            Console.WriteLine("Truck " + truck.ID + " loaded.");
             trucks.Add(truck);
             if (trucks.Count % 2 == 0)
             {
@@ -117,23 +115,29 @@ namespace Task_1
                 Thread.Sleep(1);
             }
             truck.TruckRoute = bestRoutes.Dequeue();
-            Console.WriteLine("Truck " + truck.ID + " acquired route " + truck.TruckRoute);
-            Thread.Sleep(15);
+            Console.WriteLine("Truck " + truck.ID + " acquired route " + truck.TruckRoute + ".");
             truck.TruckETA = rnd.Next(500, 5000);
-            Console.WriteLine("Truck " + truck.ID + " started the delivery.");
+            Thread.Sleep(15);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Truck " + truck.ID + " started the delivery. ETA " + truck.TruckETA + ".");
+            Console.ForegroundColor = ConsoleColor.Gray;
             if (truck.TruckETA > 3000)
             {
                 Thread.Sleep(3000);
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to depo.");
+                Console.ForegroundColor = ConsoleColor.Gray;
                 Thread.Sleep(3000);
-                Console.WriteLine("Truck " + truck.ID + " returned to the depo");                
+                Console.WriteLine("Truck " + truck.ID + " returned to the depo.");
             }
             else
             {
                 Thread.Sleep(truck.TruckETA);
-                Console.WriteLine("Truck " + truck.ID + " successfuly delivered the load.");
-                double unloadTime = truck.TruckLoadTime / 1.5;
-                Thread.Sleep(Convert.ToInt32(unloadTime));
+                int unloadTime = Convert.ToInt32(truck.TruckLoadTime / 1.5);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Truck " + truck.ID + " successfuly delivered the load. Unload time estimated at " + unloadTime +".");
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Thread.Sleep(unloadTime);
                 Console.WriteLine("Truck " + truck.ID + " unloaded.");                
             }
         }
