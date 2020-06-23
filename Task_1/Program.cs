@@ -9,14 +9,15 @@ using System.Threading.Tasks;
 namespace Task_1
 {
     class Program
-    {
+    {        
         static readonly object l = new object();
         static List<int> routes = new List<int>();
         static Queue<int> bestRoutes;
         static readonly Random rnd = new Random();
         static string path = @".../.../Routes.txt";
         static StreamWriter sw = new StreamWriter(path,append:true);
-        static SemaphoreSlim semaphore = new SemaphoreSlim(2, 2);
+        static SemaphoreSlim semaphore = new SemaphoreSlim(2,2);
+        static List<Truck> trucks = new List<Truck>();
         static void Main(string[] args)
         {
             Thread t1 = new Thread(ManagersJob);
@@ -29,7 +30,8 @@ namespace Task_1
             {
                 Truck truck = new Truck(i);
                 Thread t = new Thread(TruckLoading);
-                truck.T = t;
+                t.Name = "Thread " + i;
+                truck.T = t;                
                 truck.T.Start(truck);
             }
             Console.ReadLine();
@@ -81,32 +83,48 @@ namespace Task_1
         }
         public static void TruckLoading(object obj)
         {
-            Truck truck = (Truck)obj;            
+            Truck truck = (Truck)obj;
             semaphore.Wait();
-            Console.WriteLine("Truck " + truck.ID + " ready for loading");
-            int loadTime = rnd.Next(500, 5000);
-            truck.TruckLoadTime = loadTime;
-            Thread.Sleep(loadTime);
+            Console.WriteLine("Truck " + truck.ID + " ready for loading");            
+            truck.TruckLoadTime = rnd.Next(500, 5000);
+            Thread.Sleep(truck.TruckLoadTime);
             Console.WriteLine("Truck " + truck.ID + " loaded");
-            truck.TruckRoute = bestRoutes.Dequeue();
-            Console.WriteLine("Truck " + truck.ID + " acquired route");
-            semaphore.Release();
-            int ETA = rnd.Next(500 , 5000);
-            Console.WriteLine("Truck " + truck.ID + " started the delivery.");
-            if (ETA > 3000)
+            trucks.Add(truck);
+            if (trucks.Count % 2 == 0)
             {
-                Thread.Sleep(3000);
-                Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to unload.");
-                Thread.Sleep(3000);
-                Console.WriteLine("Truck " + truck.ID + " returned to the depo and is about to unload.");
-                double unloadTime = truck.TruckLoadTime / 1.5;
-                Thread.Sleep(Convert.ToInt32(unloadTime));
-                Console.WriteLine("Truck " + truck.ID + " unloaded.");
+                semaphore.Release(2);
             }
             else
             {
-                Thread.Sleep(ETA);
+                Thread.Sleep(1);
+            }
+            Delivery(truck);
+        }
+        public static void Delivery(Truck truck)
+        {
+            while (trucks.Count < 10)
+            {
+                Thread.Sleep(1);
+            }
+            truck.TruckRoute = bestRoutes.Dequeue();
+            Console.WriteLine("Truck " + truck.ID + " acquired route " + truck.TruckRoute);
+            Thread.Sleep(15);
+            truck.TruckETA = rnd.Next(500, 5000);
+            Console.WriteLine("Truck " + truck.ID + " started the delivery.");
+            if (truck.TruckETA > 3000)
+            {
+                Thread.Sleep(3000);
+                Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to depo.");
+                Thread.Sleep(3000);
+                Console.WriteLine("Truck " + truck.ID + " returned to the depo");                
+            }
+            else
+            {
+                Thread.Sleep(truck.TruckETA);
                 Console.WriteLine("Truck " + truck.ID + " successfuly delivered the load.");
+                double unloadTime = truck.TruckLoadTime / 1.5;
+                Thread.Sleep(Convert.ToInt32(unloadTime));
+                Console.WriteLine("Truck " + truck.ID + " unloaded.");                
             }
         }
     }
@@ -116,6 +134,7 @@ namespace Task_1
         public int ID;
         public int TruckRoute;
         public int TruckLoadTime;
+        public int TruckETA;
 
         public Truck(int id)
         {            
