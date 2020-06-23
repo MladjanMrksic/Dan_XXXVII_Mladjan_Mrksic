@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Task_1
 {
@@ -35,7 +33,7 @@ namespace Task_1
                 truck.T = t;                
                 truck.T.Start(truck);
             }
-            Console.ReadLine();
+            Console.ReadLine();            
         }
         public static void RNG()
         {
@@ -64,9 +62,7 @@ namespace Task_1
                 Console.WriteLine("Manager is chosing the best routes available.");
                 LowestDigitsDivisibleByThree();
                 foreach (var item in bestRoutes)
-                {
                     Console.WriteLine(item);
-                }
                 Console.WriteLine("Routes are chosen, start loading the trucks.");
             }            
         }
@@ -80,9 +76,7 @@ namespace Task_1
                 while ((line = sr.ReadLine()) != null)
                 {
                     if (Convert.ToInt32(line)%3==0)
-                    {
                         temp.Add(Convert.ToInt32(line));
-                    }
                 }
             } 
             temp.Sort();
@@ -99,21 +93,15 @@ namespace Task_1
             Console.WriteLine("Truck " + truck.ID + " loaded.");
             trucks.Add(truck);
             if (trucks.Count % 2 == 0)
-            {
                 semaphore.Release(2);
-            }
             else
-            {
                 Thread.Sleep(1);
-            }
             Delivery(truck);
         }
         public static void Delivery(Truck truck)
         {
             while (trucks.Count < 10)
-            {
                 Thread.Sleep(1);
-            }
             truck.TruckRoute = bestRoutes.Dequeue();
             Console.WriteLine("Truck " + truck.ID + " acquired route " + truck.TruckRoute + ".");
             truck.TruckETA = rnd.Next(500, 5000);
