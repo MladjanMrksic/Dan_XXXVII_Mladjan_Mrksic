@@ -16,6 +16,7 @@ namespace Task_1
         static readonly Random rnd = new Random();
         static string path = @".../.../Routes.txt";
         static StreamWriter sw = new StreamWriter(path,append:true);
+        static SemaphoreSlim semaphore = new SemaphoreSlim(2, 2);
         static void Main(string[] args)
         {
 
@@ -57,6 +58,47 @@ namespace Task_1
             }
             temp.Sort();
             bestRoutes = new Queue<int>(temp.GetRange(10,temp.Count-10));            
+        }
+        public static void TruckLoading(Truck truck)
+        {
+            Console.WriteLine("Truck " + truck.ID + " ready for loading");
+            semaphore.Wait();
+            int loadTime = rnd.Next(500, 5000);
+            truck.TruckLoadTime = loadTime;
+            Thread.Sleep(loadTime);
+            Console.WriteLine("Truck " + truck.ID + " loaded");
+            truck.TruckRoute = bestRoutes.Dequeue();
+            Console.WriteLine("Truck " + truck.ID + " acquired route");
+            semaphore.Release();
+            int ETA = rnd.Next(500 - 5000);
+            Console.WriteLine("Truck " + truck.ID + " started the delivery.");
+            if (ETA > 300)
+            {
+                Thread.Sleep(3000);
+                Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to unload.");
+                Thread.Sleep(3000);
+                Console.WriteLine("Truck " + truck.ID + " returned to the depo and is about to unload.");
+                double unloadTime = truck.TruckLoadTime / 1.5;
+                Thread.Sleep(Convert.ToInt32(unloadTime));
+            }
+            else
+            {
+                Thread.Sleep(ETA);
+                Console.WriteLine("Truck " + truck.ID + " successfuly delivered the load.");
+            }
+        }
+    }
+    public class Truck
+    {
+        public Thread T;
+        public int ID;
+        public int TruckRoute;
+        public int TruckLoadTime;
+
+        public Truck(Thread thread, int id)
+        {
+            T = thread;
+            ID = id;
         }
     }
 }
