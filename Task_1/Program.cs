@@ -15,7 +15,8 @@ namespace Task_1
         static Queue<int> bestRoutes;
         static readonly Random rnd = new Random();
         static string path = @".../.../Routes.txt";
-        static StreamWriter sw = new StreamWriter(path,append:true);
+        static StreamReader sr;
+        static StreamWriter sw;
         static SemaphoreSlim semaphore = new SemaphoreSlim(2,2);
         static List<Truck> trucks = new List<Truck>();
         static void Main(string[] args)
@@ -40,6 +41,7 @@ namespace Task_1
         {
             lock (l)
             {
+                sw = new StreamWriter(path, append: true);
                 using (sw)
                 {
                     Console.WriteLine("Generating routes.");
@@ -72,11 +74,19 @@ namespace Task_1
         public static void LowestDigitsDivisibleByThree()
         {
             List<int> temp = new List<int>();
-            foreach (var num in routes)
+            sr = new StreamReader(path);
+            using (sr)
             {
-                if (num%3==0)
-                    temp.Add(num);
-            }
+                            
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    if (Convert.ToInt32(line)%3==0)
+                    {
+                        temp.Add(Convert.ToInt32(line));
+                    }
+                }
+            } 
             temp.Sort();
             IEnumerable<int> distinctRoutes = temp.Distinct().Take(10);
             bestRoutes = new Queue<int>(distinctRoutes);            
