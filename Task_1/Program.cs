@@ -19,7 +19,19 @@ namespace Task_1
         static SemaphoreSlim semaphore = new SemaphoreSlim(2, 2);
         static void Main(string[] args)
         {
-
+            Thread t1 = new Thread(ManagersJob);
+            Thread t2 = new Thread(RNG);
+            t1.Start();
+            t2.Start();
+            t1.Join();
+            t2.Join();
+            for (int i = 1; i < 11; i++)
+            {
+                Truck truck = new Truck(i);
+                Thread t = new Thread(TruckLoading);
+                t.Start(truck);
+            }
+            Console.ReadLine();
         }
         public static void RNG()
         {
@@ -27,9 +39,10 @@ namespace Task_1
             {
                 using (sw)
                 {
+                    Console.WriteLine("Generating routes.");
                     for (int i = 0; i < 1000; i++)
                     {
-                        int temp = rnd.Next(1 - 5000);
+                        int temp = rnd.Next(1,5000);
                         routes.Add(temp);
                         sw.WriteLine(temp);
                     }
@@ -41,10 +54,15 @@ namespace Task_1
         {
             lock (l)
             {
+                Console.WriteLine("Manager is waiting for routes.");
                 Monitor.Wait(l, 3000);
+                Console.WriteLine("Manager is chosing the best routes available.");
                 LowestDigitsDivisibleByThree();
-                Console.WriteLine("Routes are chosen, start loading the trucks");
-                Monitor.Pulse(l);
+                foreach (var item in bestRoutes)
+                {
+                    Console.WriteLine(item);
+                }
+                Console.WriteLine("Routes are chosen, start loading the trucks.");
             }
             
         }
@@ -57,10 +75,12 @@ namespace Task_1
                     temp.Add(num);
             }
             temp.Sort();
-            bestRoutes = new Queue<int>(temp.GetRange(10,temp.Count-10));            
+            IEnumerable<int> distinctRoutes = temp.Distinct().Take(10);
+            bestRoutes = new Queue<int>(distinctRoutes);            
         }
-        public static void TruckLoading(Truck truck)
+        public static void TruckLoading(object obj)
         {
+            Truck truck = (Truck)obj;
             Console.WriteLine("Truck " + truck.ID + " ready for loading");
             semaphore.Wait();
             int loadTime = rnd.Next(500, 5000);
@@ -70,9 +90,9 @@ namespace Task_1
             truck.TruckRoute = bestRoutes.Dequeue();
             Console.WriteLine("Truck " + truck.ID + " acquired route");
             semaphore.Release();
-            int ETA = rnd.Next(500 - 5000);
+            int ETA = rnd.Next(500 , 5000);
             Console.WriteLine("Truck " + truck.ID + " started the delivery.");
-            if (ETA > 300)
+            if (ETA > 3000)
             {
                 Thread.Sleep(3000);
                 Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to unload.");
@@ -80,6 +100,7 @@ namespace Task_1
                 Console.WriteLine("Truck " + truck.ID + " returned to the depo and is about to unload.");
                 double unloadTime = truck.TruckLoadTime / 1.5;
                 Thread.Sleep(Convert.ToInt32(unloadTime));
+                Console.WriteLine("Truck " + truck.ID + " unloaded.");
             }
             else
             {
@@ -95,9 +116,8 @@ namespace Task_1
         public int TruckRoute;
         public int TruckLoadTime;
 
-        public Truck(Thread thread, int id)
-        {
-            T = thread;
+        public Truck(int id)
+        {            
             ID = id;
         }
     }
