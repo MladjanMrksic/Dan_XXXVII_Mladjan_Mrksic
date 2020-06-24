@@ -7,7 +7,9 @@ using System.Threading;
 namespace Task_1
 {
     class Program
-    {        
+    {
+        public static CancellationTokenSource cts = new CancellationTokenSource();
+        public static CancellationToken ct = cts.Token;
         static readonly object l = new object();
         static List<int> routes = new List<int>();
         static Queue<int> bestRoutes;
@@ -19,9 +21,10 @@ namespace Task_1
         static List<Truck> trucks = new List<Truck>();
         static void Main(string[] args)
         {
-            Thread t1 = new Thread(ManagersJob);
-            Thread t2 = new Thread(RNG);
+            Thread t1 = new Thread(ManagersJob);           
             t1.Start();
+            Thread t2 = new Thread(RNG);
+            Thread.Sleep(100);
             t2.Start();
             t1.Join();
             t2.Join();
@@ -35,6 +38,20 @@ namespace Task_1
             }
             Console.ReadLine();            
         }
+        public static void ManagersJob()
+        {
+            lock (l)
+            {
+                Console.WriteLine("Manager is waiting for routes.");
+                cts.CancelAfter(3000);
+                Monitor.Wait(l,3000);
+                Console.WriteLine("Manager is chosing the best routes available.");
+                LowestDigitsDivisibleByThree();
+                foreach (var item in bestRoutes)
+                    Console.WriteLine(item);
+                Console.WriteLine("Routes are chosen, start loading the trucks.");
+            }
+        }
         public static void RNG()
         {
             lock (l)
@@ -45,26 +62,20 @@ namespace Task_1
                     Console.WriteLine("Generating routes.");
                     for (int i = 0; i < 1000; i++)
                     {
-                        int temp = rnd.Next(1,5000);
-                        routes.Add(temp);
-                        sw.WriteLine(temp);
+                        if (ct.IsCancellationRequested != true)
+                        {
+                            int temp = rnd.Next(1, 5000);
+                            routes.Add(temp);
+                            sw.WriteLine(temp);
+                        }
+                        else
+                        {                            
+                            break;
+                        }
                     }
                 }
                 Monitor.Pulse(l);
             }
-        }
-        public static void ManagersJob()
-        {
-            lock (l)
-            {
-                Console.WriteLine("Manager is waiting for routes.");
-                Monitor.Wait(l, 3000);
-                Console.WriteLine("Manager is chosing the best routes available.");
-                LowestDigitsDivisibleByThree();
-                foreach (var item in bestRoutes)
-                    Console.WriteLine(item);
-                Console.WriteLine("Routes are chosen, start loading the trucks.");
-            }            
         }
         public static void LowestDigitsDivisibleByThree()
         {
@@ -96,9 +107,9 @@ namespace Task_1
                 semaphore.Release(2);
             else
                 Thread.Sleep(1);
-            Delivery(truck);
+            RouteAcquisition(truck);
         }
-        public static void Delivery(Truck truck)
+        public static void RouteAcquisition(Truck truck)
         {
             while (trucks.Count < 10)
                 Thread.Sleep(1);
@@ -109,9 +120,9 @@ namespace Task_1
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Truck " + truck.ID + " started the delivery. ETA " + truck.TruckETA + ".");
             Console.ForegroundColor = ConsoleColor.Gray;
-            Destination(truck);
+            DestinationDelivery(truck);
         }
-        public static void Destination(Truck truck)
+        public static void DestinationDelivery(Truck truck)
         {
             if (truck.TruckETA > 3000)
             {
