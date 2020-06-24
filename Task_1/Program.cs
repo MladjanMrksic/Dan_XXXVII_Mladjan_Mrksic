@@ -86,9 +86,9 @@ namespace Task_1
         public static void TruckLoading(object obj)
         {
             Truck truck = (Truck)obj;
-            semaphore.Wait();
-            Console.WriteLine("Truck " + truck.ID + " ready for loading.");            
+            semaphore.Wait();          
             truck.TruckLoadTime = rnd.Next(500, 5000);
+            Console.WriteLine("Truck " + truck.ID + " is loading. Estimated load time is " + truck.TruckLoadTime +".");
             Thread.Sleep(truck.TruckLoadTime);
             Console.WriteLine("Truck " + truck.ID + " loaded.");
             trucks.Add(truck);
@@ -109,24 +109,28 @@ namespace Task_1
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Truck " + truck.ID + " started the delivery. ETA " + truck.TruckETA + ".");
             Console.ForegroundColor = ConsoleColor.Gray;
+            Destination(truck);
+        }
+        public static void Destination(Truck truck)
+        {
             if (truck.TruckETA > 3000)
             {
                 Thread.Sleep(3000);
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to depo.");
+                Console.WriteLine("Truck " + truck.ID + " failed the delivery. Returning to starting point.");
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Thread.Sleep(3000);
-                Console.WriteLine("Truck " + truck.ID + " returned to the depo.");
+                Console.WriteLine("Truck " + truck.ID + " returned to the starting point.");
             }
             else
             {
                 Thread.Sleep(truck.TruckETA);
                 int unloadTime = Convert.ToInt32(truck.TruckLoadTime / 1.5);
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Truck " + truck.ID + " successfuly delivered the load. Unload time estimated at " + unloadTime +".");
+                Console.WriteLine("Truck " + truck.ID + " successfuly delivered the load. Unload time estimated at " + unloadTime + ".");
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Thread.Sleep(unloadTime);
-                Console.WriteLine("Truck " + truck.ID + " unloaded.");                
+                Console.WriteLine("Truck " + truck.ID + " unloaded.");
             }
         }
     }
